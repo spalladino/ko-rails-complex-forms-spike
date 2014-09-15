@@ -17,24 +17,24 @@ class KoFormBuilder < ActionView::Helpers::FormBuilder
     super(method, choices, options, html_options, &block)
   end
 
-  def fields_for(object_name, options={}, &block)
-    # TODO: Reflect on AR association instead of inflecting object_name
-    child_name = object_name.to_s.singularize.classify
-    empty_child = child_name.constantize.new
+  def fields_for(collection_name, options={}, &block)
+    child_klass = object.association(collection_name).klass
+    empty_child = child_klass.new
 
     # Run fields_for with a single empty child that will act as the KO template for each item
     # and use foreach data bind to delegate the iteration to KO
     content_tag(:div,
-      super(object_name, [empty_child], options.merge(child_index: ""), &block),
-      :'data-bind' => "foreach: #{object_name}")
+      super(collection_name, [empty_child], options.merge(child_index: ""), &block),
+      :'data-bind' => "foreach: #{collection_name}")
   end
 
-  def add_item(object_name, label=nil, options={})
-    # TODO: Reflect on AR association instead of inflecting object_name
-    label ||= "Add new #{object_name.humanize}"
-    collection_name = options[:collection] || object_name.to_s.pluralize
-    child_class_name = options[:item] || object_name.to_s.singularize.classify
-    empty_child = child_class_name.constantize.new
+  def add_item(collection_name, options={})
+    child_klass = object.association(collection_name).klass
+    empty_child = child_klass.new
+
+    label = options[:label] || "Add new #{child_klass.model_name.singular}"
+    viewmodel_collection = options[:collection] || collection_name
+    viewmodel = options[:viewmodel] || child_klass.name
 
     # Create an empty child to inject attributes via KO mapping
     model = empty_child.to_json
@@ -43,10 +43,10 @@ class KoFormBuilder < ActionView::Helpers::FormBuilder
     # automatically add to viewmodel collection on click
     click_handler = options[:handler] || <<-JS_HANDLER
       function(data, event) {
-        var viewmodel = new #{child_class_name}();
+        var viewmodel = new #{viewmodel}();
         var model = #{model};
         ko.mapping.fromJS(model, {}, viewmodel);
-        #{collection_name}.push(viewmodel);
+        #{viewmodel_collection}.push(viewmodel);
       }
     JS_HANDLER
 

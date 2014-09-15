@@ -23,7 +23,7 @@
   </div>
 
   <div>
-    <%= f.fields_for :questions, viewmodel: 'Question' do |g| %>
+    <%= f.fields_for :questions do |g| %>
       <hr/>
       <h3>Question</h3>
       <%= g.hidden_field :id %>
@@ -42,7 +42,7 @@
       <%= f.action 'Alert question', 'say' %>
     <% end %>
     <hr/>
-    <%= f.add_item :question, "Add new question" %>
+    <%= f.add_item :questions, label: "Add new question", viewmodel: 'Question' %>
   </div>
 
   <%= f.action 'Alert questionnaire', 'say' %>
